@@ -1,0 +1,31 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: CloudFormation template for EventBridge rule to trigger a lambda function on completion of a filtered Transcribe job
+Parameters:
+  TranscribeLambdaArn:
+    Description: The ARN of the lambda function to be triggered by Amazon EventBridge
+    Type: String
+  JobPrefix:
+    Description: Prefix to look for
+    Type: String
+Resources:
+  EventRule0:
+    Type: AWS::Events::Rule
+    Properties:
+      EventBusName: default
+      EventPattern:
+        source:
+          - aws.transcribe
+        detail-type:
+          - Transcribe Job State Change
+        detail:
+          TranscriptionJobName:
+            - prefix: !Ref JobPrefix
+          TranscriptionJobStatus:
+            - COMPLETED
+            - FAILED
+      Name:  !Sub ${AWS::StackName}-${JobPrefix}
+      State: ENABLED
+      Targets:
+        - Arn: !Ref TranscribeLambdaArn
+          #Id: !Select [4, !Split ["-", !Ref AWS::StackId]]
+          Id: !Select [2, !Split ['/', !Ref AWS::StackId]]
