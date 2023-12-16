@@ -220,7 +220,7 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
 
 		JsonObject jsonResource = jsonPayload.getAsJsonObject("data").getAsJsonObject("resource"); 
 
-		ArrayList<DocumentAttribute> docAttr = genrateDefaultAttribute(jsonResource,jsonPayload.get("lambdaRepoId").getAsString(),jsonPayload.get("lambdaDataSourceId").getAsString()); 
+		ArrayList<DocumentAttribute> docAttr = genrateDefaultAttribute(jsonResource,jsonPayload.get("lambdaRepoId").getAsString(),jsonPayload.get("lambdaDataSourceId").getAsString(),jsonPayload.get("lambdaDigiWorksUrl").getAsString()); 
 
 		Document newDoc = Document.builder().title(title).id(nodeId).blob(SdkBytes.fromString(transcript,Charset.defaultCharset())).contentType(ContentType.PLAIN_TEXT).attributes(docAttr).accessControlList(docPrinciple).build();
 
@@ -288,7 +288,7 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
 		inputStream.close();
 	}
 
-	public ArrayList<DocumentAttribute> genrateDefaultAttribute(JsonObject jsonResource,String repoId , String dataSourceId) throws Exception{
+	public ArrayList<DocumentAttribute> genrateDefaultAttribute(JsonObject jsonResource,String repoId , String dataSourceId,String digiWorksUrl) throws Exception{
         ArrayList<DocumentAttribute> docAttr = new ArrayList<DocumentAttribute>();
 
        // JsonObject jsonResource = jsonPayload.getAsJsonObject("data").getAsJsonObject("resource"); 
@@ -321,12 +321,20 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
         docAttr.add( DocumentAttribute.builder().key("modifiedByUser").
             value(DocumentAttributeValue.fromStringValue(jsonResource.getAsJsonObject("modifiedByUser").get("id").getAsString())).build()); 
        
+
+		docAttr.add( DocumentAttribute.builder().key("_source_uri").
+            value(DocumentAttributeValue.fromStringValue(digiWorksUrl +"/#/documents/document-view/"+jsonResource.get("id").getAsString())).build()); 
+    
   
-        docAttr.add( DocumentAttribute.builder().key("_source_uri").
-            value(DocumentAttributeValue.fromStringValue(repoId)).build()); 
+       // docAttr.add( DocumentAttribute.builder().key("_source_uri").
+        //    value(DocumentAttributeValue.fromStringValue(repoId)).build()); 
 
         docAttr.add( DocumentAttribute.builder().key("repo_id").
             value(DocumentAttributeValue.fromStringValue(repoId)).build()); 
+
+		docAttr.add( DocumentAttribute.builder().key("al_repository_id").
+            value(DocumentAttributeValue.fromStringValue(repoId)).build());  
+			
             
         docAttr.add( DocumentAttribute.builder().key("_data_source_id").
             value(DocumentAttributeValue.fromStringValue(dataSourceId)).build()); 
@@ -340,6 +348,21 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
                 jsonResource.getAsJsonObject("properties").has("cm:versionLabel") ?
                 jsonResource.getAsJsonObject("properties").get("cm:versionLabel").getAsString() : "v1"
                 )).build()); 
+
+
+		if(jsonResource.getAsJsonObject("properties").has("cm:author"))
+          docAttr.add( DocumentAttribute.builder().key("_authors").
+            value(DocumentAttributeValue.fromStringListValue( 
+                Collections.singletonList(jsonResource.getAsJsonObject("properties").get("cm:author")+"") 
+                )).build()); 
+
+        if(jsonResource.getAsJsonObject("properties").has("cm:description"))
+        docAttr.add( DocumentAttribute.builder().key("al_document_description").
+            value(DocumentAttributeValue.fromStringValue( 
+                jsonResource.getAsJsonObject("properties").get("cm:description")+"" 
+                )).build()); 
+
+
         docAttr.add( DocumentAttribute.builder().key("al_document_title").
             value(DocumentAttributeValue.fromStringValue(jsonResource.get("name").getAsString())).build()); 
         docAttr.add( DocumentAttribute.builder().key("al_document_size").
