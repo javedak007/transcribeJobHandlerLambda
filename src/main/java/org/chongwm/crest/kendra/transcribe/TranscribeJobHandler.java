@@ -172,8 +172,8 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
 					updateAlfrescoProperties(String.join("\n", finalContentArray),jsonPayload,nodeId);
   
 					attributeMap.put("jsonPayload", AttributeValue.builder().s("").build());
-					attributeMap.put("kendraAction",AttributeValue.builder().s("Node Created").build());
-					attributeMap.put("kendraStatus",AttributeValue.builder().s("success").build());
+					attributeMap.put("action",AttributeValue.builder().s("Node Created").build());
+					attributeMap.put("status",AttributeValue.builder().s("success").build());
 					PutItemRequest pit = PutItemRequest.builder().tableName(tableName).item(attributeMap).build();
 					dynamoDbClient.putItem(pit); 
 					
@@ -181,9 +181,9 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
 			} else
 			{   
 				    attributeMap.put("jsonPayload", AttributeValue.builder().s("").build());
-					attributeMap.put("kendraAction",AttributeValue.builder().s("Node Created").build());
-					attributeMap.put("kendraStatus",AttributeValue.builder().s("failed").build()); 
-					attributeMap.put("kendraError",AttributeValue.builder().s(transcriptionJob.failureReason()+"").build());
+					attributeMap.put("action",AttributeValue.builder().s("Node Created").build());
+					attributeMap.put("status",AttributeValue.builder().s("failed").build()); 
+					attributeMap.put("error",AttributeValue.builder().s(transcriptionJob.failureReason()+"").build());
 					PutItemRequest pit = PutItemRequest.builder().tableName(tableName).item(attributeMap).build();
 					dynamoDbClient.putItem(pit);
 			}
