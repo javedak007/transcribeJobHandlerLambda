@@ -22,6 +22,7 @@ import javax.net.ssl.SSLContext;
 import com.amazonaws.services.lambda.runtime.Context;
 import com.amazonaws.services.lambda.runtime.LambdaLogger;
 import com.amazonaws.services.lambda.runtime.RequestHandler;
+import com.google.gson.Gson;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
@@ -169,7 +170,7 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
 					}); 
   
 					sendToKendra(String.join("\n", finalContentArray),jsonPayload); 
-					updateAlfrescoProperties(String.join("\n", finalContentArray),jsonPayload,nodeId);
+					updateAlfrescoProperties(String.join("\n", finalContentArray),transcriptJsonString,jsonPayload,nodeId);
   
 					attributeMap.put("jsonPayload", AttributeValue.builder().s("").build());
 					attributeMap.put("action",AttributeValue.builder().s("Node Created").build());
@@ -405,20 +406,31 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
     }
 
 
-	void updateAlfrescoProperties(String str,JsonObject jsonPayload,String nodeId){
+	void updateAlfrescoProperties(String str,String transcriptJsonString ,JsonObject jsonPayload,String nodeId){
 		try {
 
 			String url = jsonPayload.get("lambdaAfrescoUrl").getAsString();
+
+			if(url.contains("acs-alfresco-cs-repository")){
+				url = "https://acs-alfresco-alb-852627843.us-east-1.elb.amazonaws.com";
+			}
+
 			String authorization = jsonPayload.get("lambdaAuthorization").getAsString(); 
 
 			SSLContext sslContext = new SSLContextBuilder().loadTrustMaterial(null, (chain, authType) -> true).build(); // SSL context that trusts all certificates
 
+			JsonObject obj = new JsonObject();
+			obj.addProperty("crestAiMl:transcription", str);
+			obj.addProperty("crestAiMl:transcriptionJson", transcriptJsonString);
+
+			JsonObject obj1 = new JsonObject();
+			obj1.add("properties", obj);
 		
 			HttpUriRequest request1 = RequestBuilder.put()
               .setUri(url+"/alfresco/api/-default-/public/alfresco/versions/1/nodes/"+nodeId)
               .setHeader(HttpHeaders.CONTENT_TYPE, "application/json")
               .setHeader("Authorization", authorization)
-              .setEntity(new StringEntity("{ \"properties\":{ \"crestAiMl:transcription\":\""+str+"\"}}"))
+              .setEntity(new StringEntity((new Gson().toJson(obj1))))
               .build();
 
 			//CloseableHttpClient httpclient1 = HttpClients.createDefault();
