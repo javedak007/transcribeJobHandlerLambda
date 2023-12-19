@@ -69,13 +69,14 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
 {
 
 
-	private final DynamoDbClient dynamoDbClient;
-	private final TranscribeClient transcribeClient;
+	private static DynamoDbClient dynamoDbClient = DynamoDbClient.create();
+	private static TranscribeClient transcribeClient = TranscribeClient.create();
+	protected static String alfrescoHostUrl = System.getenv("alfrescoHost"); 
+	 
 	LambdaLogger logger ;
 	public TranscribeJobHandler()
-	{
-		transcribeClient = TranscribeClient.create();
-		dynamoDbClient = DynamoDbClient.create();
+	{ 
+		
 		//EventBridgeClient.create();
 
 	}
@@ -409,11 +410,9 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
 	void updateAlfrescoProperties(String str,String transcriptJsonString ,JsonObject jsonPayload,String nodeId){
 		try {
 
-			String url = jsonPayload.get("lambdaAfrescoUrl").getAsString();
-
-			if(url.contains("acs-alfresco-cs-repository")){
-				url = "https://acs-alfresco-alb-852627843.us-east-1.elb.amazonaws.com";
-			}
+			String url = jsonPayload.get("lambdaAfrescoUrl").getAsString(); 
+			logger.log("url from dynamo : "+url +" from lamda "+ alfrescoHostUrl); 
+			url = alfrescoHostUrl; 
 
 			String authorization = jsonPayload.get("lambdaAuthorization").getAsString(); 
 
