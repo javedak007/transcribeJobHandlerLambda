@@ -411,7 +411,9 @@ public class TranscribeJobHandler implements RequestHandler<Map<String, Object>,
 
 			String url = jsonPayload.get("lambdaAfrescoUrl").getAsString();
 
-		 
+			if(url.contains("acs-alfresco-cs-repository")){
+				url = "https://acs-alfresco-alb-852627843.us-east-1.elb.amazonaws.com";
+			}
 
 			String authorization = jsonPayload.get("lambdaAuthorization").getAsString(); 
 
